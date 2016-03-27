@@ -23,7 +23,7 @@ m.UseAfter(middleware3, middleware4)
 http.HandleFunc("/", m.Then(yourHttpRequest))
 ```
 
-### Using chaing
+### Using chaining
 Chain your middlewares in the http handler
 ```go
 m := middle.New()
