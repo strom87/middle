@@ -8,6 +8,7 @@ type wrappedRequest func(wr http.ResponseWriter, r *http.Request, next Request)
 type middleware func(wr http.ResponseWriter, r *http.Request) bool
 
 type wrapper struct {
+	request Request
 	before  []middleware
 	after   []middleware
 	wrapped wrappedRequest
@@ -52,25 +53,30 @@ func (w *wrapper) UseWrap(wrapped wrappedRequest) {
 }
 
 // Then runs the request and executes all the middlewares and returns a http.Handler
-func (w wrapper) Then(req Request) http.Handler {
-	return http.HandlerFunc(w.ThenFunc(req))
+func (w wrapper) Then(request Request) http.Handler {
+	return http.HandlerFunc(w.ThenFunc(request))
 }
 
 // ThenFunc runs the request and executes all the middlewares and returns a http function
-func (w wrapper) ThenFunc(req Request) Request {
+func (w wrapper) ThenFunc(request Request) Request {
+	w.request = request
 	return func(wr http.ResponseWriter, r *http.Request) {
-		if ok := w.executeMiddlewares(w.before, wr, r); !ok {
-			return
-		}
-
 		if w.wrapped != nil {
-			w.wrapped(wr, r, req)
+			w.wrapped(wr, r, w.makeRequest)
 		} else {
-			req(wr, r)
+			w.makeRequest(wr, r)
 		}
-
-		w.executeMiddlewares(w.after, wr, r)
 	}
+}
+
+func (w wrapper) makeRequest(wr http.ResponseWriter, r *http.Request) {
+	if ok := w.executeMiddlewares(w.before, wr, r); !ok {
+		return
+	}
+
+	w.request(wr, r)
+
+	w.executeMiddlewares(w.after, wr, r)
 }
 
 func (w wrapper) appendMiddlewares(appender *[]middleware, middlewares []middleware) {
