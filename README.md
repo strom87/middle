@@ -1,6 +1,11 @@
 # Middle - go middleware
 A middleware handler for golang that helps you make your HTTP requests simple and elegant
 
+### Get package
+```sh
+$ go get github.com/strom87/middle
+```
+
 ### Basic usage
 ```go
 func middleware1(w http.ResponseWriter, r *http.Request) bool {
