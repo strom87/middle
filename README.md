@@ -48,16 +48,16 @@ m.UseWrap(wrapper)
 
 http.Handle("/", m.Wrap(wrapper).Then(request))
 ```
-##### Before
+### Before
 **UseBefore(...)** and **Before(...)** exectues the included middlewares before the main request.  
 **UseBefore** adds the middleware to be executed in all of the requests.  
 **Before** chaining just executes the inserted middlewares for that single request.
 
-##### After
+### After
 **UseAfter(...)** and **After(...)** exectues the included middlewares after the main request.  
 **UseAfter** adds the middleware to be executed in all of the requests.  
 **After** chaining just executes the inserted middlewares for that single request.
 
-##### Wrap
+### Wrap
 **UseWrap()** and **Wrap()** executes first and last, all the middlewares and the main request is excecuted in between wrap functions **next()** statement.  
 **UseWrap()** will be executed for all the request and can be overidden for a single request with the chaining function **Wrap()**.
