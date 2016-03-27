@@ -51,8 +51,13 @@ func (w *wrapper) UseWrap(wrapped wrappedRequest) {
 	w.wrapped = wrapped
 }
 
-// Then runs the request and executes all the middlewares
-func (w wrapper) Then(req Request) Request {
+// Then runs the request and executes all the middlewares and returns a http.Handler
+func (w wrapper) Then(req Request) http.Handler {
+	return http.HandlerFunc(w.ThenFunc(req))
+}
+
+// ThenFunc runs the request and executes all the middlewares and returns a http function
+func (w wrapper) ThenFunc(req Request) Request {
 	return func(wr http.ResponseWriter, r *http.Request) {
 		if ok := w.executeMiddlewares(w.before, wr, r); !ok {
 			return

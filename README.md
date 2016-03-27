@@ -20,7 +20,8 @@ m := middle.New()
 m.UseBefore(middleware1, middleware2)
 m.UseAfter(middleware3, middleware4)
 
-http.HandleFunc("/", m.Then(yourHttpRequest))
+http.Handle("/one", m.Then(yourHttpRequest))
+http.HandleFunc("/two", m.ThenFunc(yourHttpRequest))
 ```
 
 ### Using chaining
@@ -29,8 +30,8 @@ Chain your middlewares in the http handler
 m := middle.New()
 m.UseBefore(middleware1)
 
-http.HandleFunc("/one", m.Before(middleware2).Then(request))
-http.HandleFunc("/two", m.Before(middleware3).After(middleware4).Then(request))
+http.HandleFunc("/one", m.Before(middleware2).ThenFunc(request))
+http.HandleFunc("/two", m.Before(middleware3).After(middleware4).ThenFunc(request))
 ```
 
 ### Wrap the request
@@ -44,5 +45,5 @@ func wrapper(w http.ResponseWriter, r *http.Request, next middle.Request) {
 m := middle.New()
 m.UseWrap(wrapper)
 
-http.HandleFunc("/", m.Wrap(wrapper).Then(request))
+http.Handle("/", m.Wrap(wrapper).Then(request))
 ```
