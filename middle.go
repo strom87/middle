@@ -75,7 +75,6 @@ func (w wrapper) makeRequest(wr http.ResponseWriter, r *http.Request) {
 	}
 
 	w.request(wr, r)
-
 	w.executeMiddlewares(w.after, wr, r)
 }
 
