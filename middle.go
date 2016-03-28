@@ -75,7 +75,9 @@ func (w wrapper) makeRequest(wr http.ResponseWriter, r *http.Request) {
 	}
 
 	w.request(wr, r)
-	w.executeMiddlewares(w.after, wr, r)
+	if ok := w.executeMiddlewares(w.after, wr, r); !ok {
+		return
+	}
 }
 
 func (w wrapper) appendMiddlewares(appender *[]middleware, middlewares []middleware) {
