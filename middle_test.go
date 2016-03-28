@@ -8,14 +8,14 @@ import (
 	"testing"
 )
 
-type testCases struct {
+type testCase struct {
 	id      string
 	actual  string
 	handler http.Handler
 }
 
-func getTestCases() []testCases {
-	return []testCases{
+func getTestCases() []testCase {
+	return []testCase{
 		{
 			id:      "SimpleRequest",
 			actual:  "final",
