@@ -8,6 +8,99 @@ import (
 	"testing"
 )
 
+type testCases struct {
+	id      string
+	actual  string
+	handler http.Handler
+}
+
+func getTestCases() []testCases {
+	return []testCases{
+		{
+			id:      "SimpleRequest",
+			actual:  "final",
+			handler: New().Then(final),
+		},
+		{
+			id:     "UseBefore",
+			actual: "one two final",
+			handler: func() http.Handler {
+				m := New()
+				m.UseBefore(middleware1, middleware2)
+				return m.Then(final)
+			}(),
+		},
+		{
+			id:     "UseBeforeWithChaining",
+			actual: "one two three four final",
+			handler: func() http.Handler {
+				m := New()
+				m.UseBefore(middleware1, middleware2)
+				return m.Before(middleware3, middleware4).Then(final)
+			}(),
+		},
+		{
+			id:     "UseAfter",
+			actual: "final one two",
+			handler: func() http.Handler {
+				m := New()
+				m.UseAfter(middleware1, middleware2)
+				return m.Then(final)
+			}(),
+		},
+		{
+			id:     "UseAfterWithChaining",
+			actual: "final one two three four",
+			handler: func() http.Handler {
+				m := New()
+				m.UseAfter(middleware1, middleware2)
+				return m.After(middleware3, middleware4).Then(final)
+			}(),
+		},
+		{
+			id:      "BeforeAndAfter",
+			actual:  "one two final three four",
+			handler: New().Before(middleware1, middleware2).After(middleware3, middleware4).Then(final),
+		},
+		{
+			id:     "UseWrap",
+			actual: "wrapper1_start final wrapper1_end",
+			handler: func() http.Handler {
+				m := New()
+				m.UseWrap(wrapper1)
+				return m.Then(final)
+			}(),
+		},
+		{
+			id:     "OverrideUseWrap",
+			actual: "wrapper2_start final wrapper2_end",
+			handler: func() http.Handler {
+				m := New()
+				m.UseWrap(wrapper1)
+				return m.Wrap(wrapper2).Then(final)
+			}(),
+		},
+		{
+			id:      "StopMiddleware",
+			actual:  "one stop",
+			handler: New().Before(middleware1, middlewareStop, middleware2).Then(final),
+		},
+	}
+}
+
+func TestRunTestCases(t *testing.T) {
+	for _, testCase := range getTestCases() {
+		result, err := generateRequest(testCase.handler)
+		if err != nil {
+			t.Error(err)
+		}
+
+		if testCase.actual != result {
+			t.Errorf("ID: %s. Expected: %s Got: %s", testCase.id, testCase.actual, result)
+		}
+	}
+}
+
 func middleware1(w http.ResponseWriter, r *http.Request) bool {
 	w.Write([]byte("one "))
 	return true
@@ -70,137 +163,4 @@ func generateRequest(handler http.Handler) (string, error) {
 	}
 
 	return strings.Trim(string(result), " "), nil
-}
-
-func TestSimpleRequest(t *testing.T) {
-	const actual = "final"
-
-	result, err := generateRequest(New().Then(final))
-	if err != nil {
-		t.Error(err)
-	}
-
-	if actual != result {
-		t.Errorf("Expected: %s Got: %s", actual, result)
-	}
-}
-
-func TestUseBefore(t *testing.T) {
-	const actual = "one two final"
-
-	m := New()
-	m.UseBefore(middleware1, middleware2)
-
-	result, err := generateRequest(m.Then(final))
-	if err != nil {
-		t.Error(err)
-	}
-
-	if actual != result {
-		t.Errorf("Expected: %s Got: %s", actual, result)
-	}
-}
-
-func TestUseBeforeWithChaining(t *testing.T) {
-	const actual = "one two three four final"
-
-	m := New()
-	m.UseBefore(middleware1, middleware2)
-
-	result, err := generateRequest(m.Before(middleware3, middleware4).Then(final))
-	if err != nil {
-		t.Error(err)
-	}
-
-	if actual != result {
-		t.Errorf("Expected: %s Got: %s", actual, result)
-	}
-}
-
-func TestUseAfter(t *testing.T) {
-	const actual = "final one two"
-
-	m := New()
-	m.UseAfter(middleware1, middleware2)
-
-	result, err := generateRequest(m.Then(final))
-	if err != nil {
-		t.Error(err)
-	}
-
-	if actual != result {
-		t.Errorf("Expected: %s Got: %s", actual, result)
-	}
-}
-
-func TestUseAfterWithChaining(t *testing.T) {
-	const actual = "final one two three four"
-
-	m := New()
-	m.UseAfter(middleware1, middleware2)
-
-	result, err := generateRequest(m.After(middleware3, middleware4).Then(final))
-	if err != nil {
-		t.Error(err)
-	}
-
-	if actual != result {
-		t.Errorf("Expected: %s Got: %s", actual, result)
-	}
-}
-
-func TestBeforeAndAfter(t *testing.T) {
-	const actual = "one two final three four"
-
-	result, err := generateRequest(New().Before(middleware1, middleware2).After(middleware3, middleware4).Then(final))
-	if err != nil {
-		t.Error(err)
-	}
-
-	if actual != result {
-		t.Errorf("Expected: %s Got: %s", actual, result)
-	}
-}
-
-func TestUseWrap(t *testing.T) {
-	const actual = "wrapper1_start final wrapper1_end"
-	m := New()
-	m.UseWrap(wrapper1)
-
-	result, err := generateRequest(m.Then(final))
-	if err != nil {
-		t.Error(err)
-	}
-
-	if actual != result {
-		t.Errorf("Expected: %s Got: %s", actual, result)
-	}
-}
-
-func TestOverrideUseWrap(t *testing.T) {
-	const actual = "wrapper2_start final wrapper2_end"
-	m := New()
-	m.UseWrap(wrapper1)
-
-	result, err := generateRequest(m.Wrap(wrapper2).Then(final))
-	if err != nil {
-		t.Error(err)
-	}
-
-	if actual != result {
-		t.Errorf("Expected: %s Got: %s", actual, result)
-	}
-}
-
-func TestStopMiddleware(t *testing.T) {
-	const actual = "one stop"
-
-	result, err := generateRequest(New().Before(middleware1, middlewareStop, middleware2).Then(final))
-	if err != nil {
-		t.Error(err)
-	}
-
-	if actual != result {
-		t.Errorf("Expected: %s Got: %s", actual, result)
-	}
 }
