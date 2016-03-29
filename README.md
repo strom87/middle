@@ -1,5 +1,5 @@
 # Middle - go middleware
-A middleware handler for golang that helps you make your HTTP requests simple and elegant
+A middleware handler for golang that helps you keep your HTTP requests simple and elegant
 
 ### Get package
 ```sh
